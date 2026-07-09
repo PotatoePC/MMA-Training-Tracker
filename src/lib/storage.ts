@@ -1,0 +1,101 @@
+import type { AppData, TrainingSession } from "./types";
+import { createSeedData } from "./seed";
+
+const STORAGE_KEY = "mma-training-tracker-v1";
+
+export function loadData(): AppData {
+  if (typeof window === "undefined") {
+    return createSeedData();
+  }
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) {
+      const seed = createSeedData();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(seed));
+      return seed;
+    }
+    const parsed = JSON.parse(raw) as AppData;
+    if (!parsed.sessions || !Array.isArray(parsed.sessions)) {
+      const seed = createSeedData();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(seed));
+      return seed;
+    }
+    return {
+      sessions: parsed.sessions,
+      customExercises: parsed.customExercises ?? [],
+      customCardioTypes: parsed.customCardioTypes ?? [],
+      version: parsed.version ?? 1,
+    };
+  } catch {
+    const seed = createSeedData();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(seed));
+    return seed;
+  }
+}
+
+export function saveData(data: AppData): void {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+export function addSession(session: TrainingSession): AppData {
+  const data = loadData();
+  data.sessions = [...data.sessions, session].sort((a, b) =>
+    a.date.localeCompare(b.date)
+  );
+  if (session.strength) {
+    for (const ex of session.strength.exercises) {
+      if (ex.name && !data.customExercises.includes(ex.name)) {
+        data.customExercises = [...data.customExercises, ex.name].sort();
+      }
+    }
+  }
+  if (session.cardio?.cardioType) {
+    if (!data.customCardioTypes.includes(session.cardio.cardioType)) {
+      data.customCardioTypes = [
+        ...data.customCardioTypes,
+        session.cardio.cardioType,
+      ].sort();
+    }
+  }
+  saveData(data);
+  return data;
+}
+
+export function updateSession(session: TrainingSession): AppData {
+  const data = loadData();
+  data.sessions = data.sessions.map((s) =>
+    s.id === session.id ? session : s
+  );
+  saveData(data);
+  return data;
+}
+
+export function deleteSession(id: string): AppData {
+  const data = loadData();
+  data.sessions = data.sessions.filter((s) => s.id !== id);
+  saveData(data);
+  return data;
+}
+
+export function resetToSeed(): AppData {
+  const seed = createSeedData();
+  saveData(seed);
+  return seed;
+}
+
+export function getSessionsForDate(
+  sessions: TrainingSession[],
+  date: string
+): TrainingSession[] {
+  return sessions.filter((s) => s.date === date);
+}
+
+export function getSessionTypesForDate(
+  sessions: TrainingSession[],
+  date: string
+): Set<string> {
+  return new Set(
+    sessions.filter((s) => s.date === date).map((s) => s.type)
+  );
+}
