@@ -10,11 +10,12 @@ export interface StrengthExercise {
   id: string;
   name: string;
   sets: ExerciseSet[];
+  rpe?: number;
 }
 
 export interface StrengthSessionData {
   exercises: StrengthExercise[];
-  rpe: number;
+  rpe?: number;
 }
 
 export interface CardioSessionData {

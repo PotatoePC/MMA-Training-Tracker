@@ -20,6 +20,7 @@ function emptyExercise(name = ""): StrengthExercise {
   return {
     id: generateId(),
     name,
+    rpe: 7,
     sets: [emptySet()],
   };
 }
@@ -30,12 +31,15 @@ export function StrengthForm({
   onSubmit,
   onCancel,
 }: StrengthFormProps) {
-  const [exercises, setExercises] = useState<StrengthExercise[]>(
-    initial?.exercises?.length
-      ? initial.exercises
-      : [emptyExercise()]
-  );
-  const [rpe, setRpe] = useState(initial?.rpe ?? 7);
+  const [exercises, setExercises] = useState<StrengthExercise[]>(() => {
+    if (initial?.exercises?.length) {
+      return initial.exercises.map((ex) => ({
+        ...ex,
+        rpe: ex.rpe ?? initial.rpe ?? 7,
+      }));
+    }
+    return [emptyExercise()];
+  });
   const [newExerciseName, setNewExerciseName] = useState("");
 
   const updateExercise = (id: string, patch: Partial<StrengthExercise>) => {
@@ -101,12 +105,13 @@ export function StrengthForm({
       .map((ex) => ({
         ...ex,
         name: ex.name.trim(),
+        rpe: ex.rpe ?? 7,
         sets: ex.sets.filter((s) => s.weightKg > 0 || s.reps > 0),
       }))
       .filter((ex) => ex.name && ex.sets.length > 0);
 
     if (!cleaned.length) return;
-    onSubmit({ exercises: cleaned, rpe });
+    onSubmit({ exercises: cleaned });
   };
 
   return (
@@ -246,6 +251,33 @@ export function StrengthForm({
             >
               <Plus className="h-3.5 w-3.5" /> Add set
             </button>
+
+            <div className="mt-3 border-t border-white/6 pt-3">
+              <div className="mb-1.5 flex items-center justify-between">
+                <label className="text-xs font-medium text-zinc-400">
+                  Exercise RPE
+                </label>
+                <span className="rounded-md bg-sky-500/15 px-2 py-0.5 text-xs font-semibold text-sky-300">
+                  {ex.rpe ?? 7}/10
+                </span>
+              </div>
+              <input
+                type="range"
+                min={1}
+                max={10}
+                step={0.5}
+                value={ex.rpe ?? 7}
+                onChange={(e) =>
+                  updateExercise(ex.id, { rpe: parseFloat(e.target.value) })
+                }
+                className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-zinc-700 accent-sky-500"
+              />
+              <div className="mt-1 flex justify-between text-[10px] text-zinc-600">
+                <span>Light (1)</span>
+                <span>Moderate (5–7)</span>
+                <span>Max effort (10)</span>
+              </div>
+            </div>
           </div>
         ))}
       </div>
@@ -257,29 +289,6 @@ export function StrengthForm({
       >
         <Plus className="h-4 w-4" /> Add exercise
       </button>
-
-      <div>
-        <div className="mb-2 flex items-center justify-between">
-          <label className="text-sm font-medium text-zinc-300">
-            Session RPE / Hardness
-          </label>
-          <span className="rounded-full bg-sky-500/15 px-2.5 py-0.5 text-sm font-semibold text-sky-300">
-            {rpe}/10
-          </span>
-        </div>
-        <input
-          type="range"
-          min={1}
-          max={10}
-          value={rpe}
-          onChange={(e) => setRpe(parseInt(e.target.value, 10))}
-          className="h-2 w-full cursor-pointer appearance-none rounded-full bg-zinc-700 accent-sky-500"
-        />
-        <div className="mt-1 flex justify-between text-[10px] text-zinc-600">
-          <span>Easy</span>
-          <span>Max effort</span>
-        </div>
-      </div>
 
       <div className="flex gap-3 pt-2">
         <button

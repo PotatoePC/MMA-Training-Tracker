@@ -13,11 +13,11 @@ export const SEED_SESSIONS: TrainingSession[] = [
     type: "strength",
     createdAt: "2026-01-08T18:00:00.000Z",
     strength: {
-      rpe: 7,
       exercises: [
         {
           id: "ex-1a",
           name: "Barbell Back Squat",
+          rpe: 7,
           sets: [
             { id: "s1", weightKg: 100, reps: 5 },
             { id: "s2", weightKg: 100, reps: 5 },
@@ -27,6 +27,7 @@ export const SEED_SESSIONS: TrainingSession[] = [
         {
           id: "ex-1b",
           name: "Bench Press",
+          rpe: 7,
           sets: [
             { id: "s4", weightKg: 80, reps: 6 },
             { id: "s5", weightKg: 80, reps: 6 },
@@ -42,11 +43,11 @@ export const SEED_SESSIONS: TrainingSession[] = [
     type: "strength",
     createdAt: "2026-02-12T18:30:00.000Z",
     strength: {
-      rpe: 8,
       exercises: [
         {
           id: "ex-2a",
           name: "Barbell Back Squat",
+          rpe: 8,
           sets: [
             { id: "s7", weightKg: 105, reps: 5 },
             { id: "s8", weightKg: 110, reps: 4 },
@@ -56,6 +57,7 @@ export const SEED_SESSIONS: TrainingSession[] = [
         {
           id: "ex-2b",
           name: "Deadlift",
+          rpe: 8,
           sets: [
             { id: "s10", weightKg: 140, reps: 5 },
             { id: "s11", weightKg: 150, reps: 3 },
@@ -71,11 +73,11 @@ export const SEED_SESSIONS: TrainingSession[] = [
     type: "strength",
     createdAt: "2026-03-20T17:45:00.000Z",
     strength: {
-      rpe: 8,
       exercises: [
         {
           id: "ex-3a",
           name: "Barbell Back Squat",
+          rpe: 8,
           sets: [
             { id: "s13", weightKg: 110, reps: 5 },
             { id: "s14", weightKg: 115, reps: 4 },
@@ -85,6 +87,7 @@ export const SEED_SESSIONS: TrainingSession[] = [
         {
           id: "ex-3b",
           name: "Bench Press",
+          rpe: 8,
           sets: [
             { id: "s16", weightKg: 85, reps: 6 },
             { id: "s17", weightKg: 90, reps: 5 },
@@ -100,11 +103,11 @@ export const SEED_SESSIONS: TrainingSession[] = [
     type: "strength",
     createdAt: "2026-05-06T18:15:00.000Z",
     strength: {
-      rpe: 9,
       exercises: [
         {
           id: "ex-4a",
           name: "Barbell Back Squat",
+          rpe: 9,
           sets: [
             { id: "s19", weightKg: 120, reps: 4 },
             { id: "s20", weightKg: 125, reps: 3 },
@@ -114,6 +117,7 @@ export const SEED_SESSIONS: TrainingSession[] = [
         {
           id: "ex-4b",
           name: "Deadlift",
+          rpe: 9,
           sets: [
             { id: "s22", weightKg: 160, reps: 4 },
             { id: "s23", weightKg: 170, reps: 2 },
@@ -123,6 +127,7 @@ export const SEED_SESSIONS: TrainingSession[] = [
         {
           id: "ex-4c",
           name: "Bench Press",
+          rpe: 8,
           sets: [
             { id: "s25", weightKg: 92.5, reps: 5 },
             { id: "s26", weightKg: 95, reps: 4 },
@@ -314,11 +319,11 @@ export const SEED_SESSIONS: TrainingSession[] = [
     type: "strength",
     createdAt: "2026-07-03T18:00:00.000Z",
     strength: {
-      rpe: 8,
       exercises: [
         {
           id: "ex-5a",
           name: "Barbell Back Squat",
+          rpe: 8.5,
           sets: [
             { id: "s28", weightKg: 125, reps: 4 },
             { id: "s29", weightKg: 130, reps: 3 },
@@ -328,6 +333,7 @@ export const SEED_SESSIONS: TrainingSession[] = [
         {
           id: "ex-5b",
           name: "Bench Press",
+          rpe: 7.5,
           sets: [
             { id: "s31", weightKg: 95, reps: 5 },
             { id: "s32", weightKg: 97.5, reps: 4 },

@@ -5,8 +5,13 @@ import {
   CalendarDays,
   ChartLine,
   RotateCcw,
+  Cloud,
+  CloudCheck,
+  User as UserIcon,
+  Loader2,
 } from "lucide-react";
 import { useSessions } from "@/hooks/useSessions";
+import { useAuth } from "@/context/AuthContext";
 import { addMonths, subMonths } from "@/lib/calendar";
 import type { TrainingSession } from "@/lib/types";
 import { SESSION_COLORS } from "@/lib/types";
@@ -14,6 +19,7 @@ import { CalendarMonth } from "./CalendarMonth";
 import { DayDrawer } from "./DayDrawer";
 import { Analytics } from "./Analytics";
 import { StatsBar } from "./StatsBar";
+import { AuthModal } from "./AuthModal";
 
 type MainView = "calendar" | "analytics";
 
@@ -23,10 +29,14 @@ export function AppShell() {
     customExercises,
     customCardioTypes,
     ready,
+    syncStatus,
     addSession,
     deleteSession,
     reset,
   } = useSessions();
+
+  const { user } = useAuth();
+  const [authModalOpen, setAuthModalOpen] = useState(false);
 
   const [viewDate, setViewDate] = useState(() => new Date(2026, 6, 1));
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
@@ -77,9 +87,27 @@ export function AppShell() {
               <h1 className="text-base font-semibold tracking-tight text-zinc-100 sm:text-lg">
                 MMA Training Tracker
               </h1>
-              <p className="text-[11px] text-zinc-500">
-                2026 · Metric only (kg · km · min/km)
-              </p>
+              <div className="flex items-center gap-2">
+                <p className="text-[11px] text-zinc-500">
+                  2026 · Metric only (kg · km · min/km)
+                </p>
+                <span className="text-zinc-700">·</span>
+                {syncStatus === "syncing" ? (
+                  <span className="flex items-center gap-1 text-[10px] text-sky-400">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    Syncing…
+                  </span>
+                ) : syncStatus === "synced" ? (
+                  <span className="flex items-center gap-1 text-[10px] text-emerald-400">
+                    <Cloud className="h-3 w-3" />
+                    Cloud Synced
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1 text-[10px] text-zinc-500">
+                    Local mode
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 
@@ -110,6 +138,24 @@ export function AppShell() {
               <ChartLine className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Analytics</span>
             </button>
+
+            {/* Auth / Sync Button */}
+            <button
+              type="button"
+              onClick={() => setAuthModalOpen(true)}
+              className={[
+                "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition",
+                user
+                  ? "border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20"
+                  : "border border-[#0A84FF]/30 bg-[#0A84FF]/10 text-[#0A84FF] hover:bg-[#0A84FF]/20",
+              ].join(" ")}
+            >
+              <UserIcon className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">
+                {user ? user.email?.split("@")[0] : "Sync / Log in"}
+              </span>
+            </button>
+
             <button
               type="button"
               onClick={() => {
@@ -164,6 +210,12 @@ export function AppShell() {
           onDelete={deleteSession}
         />
       )}
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+      />
     </div>
   );
 }

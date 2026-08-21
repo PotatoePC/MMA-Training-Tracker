@@ -14,6 +14,8 @@ export const metadata: Metadata = {
     "Apple Calendar–inspired MMA & athletic training tracker. Strength, cardio, grappling, and striking — metric only (kg, km, min/km).",
 };
 
+import { AuthProvider } from "@/context/AuthContext";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -21,7 +23,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${inter.variable} h-full antialiased dark`} style={{ colorScheme: "dark" }}>
-      <body className="min-h-full bg-black font-sans text-zinc-100">{children}</body>
+      <body className="min-h-full bg-black font-sans text-zinc-100">
+        <AuthProvider>{children}</AuthProvider>
+      </body>
     </html>
   );
 }

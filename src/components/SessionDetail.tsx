@@ -78,15 +78,23 @@ export function SessionDetail({ session, onDelete }: SessionDetailProps) {
           {session.strength.exercises.map((ex) => {
             const vol = totalVolume(ex.sets);
             const oneRm = bestEpley1RM(ex.sets);
+            const exerciseRpe = ex.rpe ?? session.strength?.rpe;
             return (
               <div
                 key={ex.id}
                 className="rounded-xl bg-black/30 p-3 ring-1 ring-white/6"
               >
-                <div className="mb-2 flex items-center justify-between">
-                  <p className="text-sm font-semibold text-zinc-200">
-                    {ex.name}
-                  </p>
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-semibold text-zinc-200">
+                      {ex.name}
+                    </p>
+                    {exerciseRpe != null && (
+                      <span className="rounded-full bg-sky-500/15 px-2 py-0.5 text-[10px] font-semibold text-sky-300 ring-1 ring-sky-500/30">
+                        RPE {exerciseRpe}/10
+                      </span>
+                    )}
+                  </div>
                   <div className="flex items-center gap-2 text-[10px] text-zinc-500">
                     <span className="flex items-center gap-0.5">
                       <Weight className="h-3 w-3" />
@@ -113,10 +121,6 @@ export function SessionDetail({ session, onDelete }: SessionDetailProps) {
               </div>
             );
           })}
-          <p className="text-xs text-zinc-500">
-            Session RPE:{" "}
-            <strong className="text-zinc-300">{session.strength.rpe}/10</strong>
-          </p>
         </div>
       )}
 
