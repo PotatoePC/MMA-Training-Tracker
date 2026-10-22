@@ -182,6 +182,8 @@ export function DayDrawer({
           {view === "strength" && (
             <StrengthForm
               customExercises={customExercises}
+              sessions={sessions}
+              dateKey={dateKey}
               onSubmit={saveStrength}
               onCancel={() => setView("pick")}
             />

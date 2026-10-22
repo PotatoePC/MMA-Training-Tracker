@@ -202,7 +202,7 @@ export async function migrateLocalDataToCloud(
 
   const sessionsToUpload = localData.sessions?.length
     ? localData.sessions
-    : createSeedData().sessions;
+    : [];
 
   const batch = writeBatch(db);
 

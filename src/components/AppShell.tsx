@@ -161,13 +161,13 @@ export function AppShell() {
               onClick={() => {
                 if (
                   confirm(
-                    "Reset all data to seed sessions? This cannot be undone."
+                    "Clear all sessions and reset to default? This cannot be undone."
                   )
                 ) {
                   reset();
                 }
               }}
-              title="Reset to seed data"
+              title="Clear all data"
               className="ml-1 rounded-full p-2 text-zinc-600 transition hover:bg-zinc-800 hover:text-zinc-400"
             >
               <RotateCcw className="h-3.5 w-3.5" />

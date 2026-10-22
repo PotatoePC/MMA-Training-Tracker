@@ -386,7 +386,7 @@ export const SEED_SESSIONS: TrainingSession[] = [
 
 export function createSeedData(): AppData {
   return {
-    sessions: SEED_SESSIONS,
+    sessions: [],
     customExercises: [...DEFAULT_EXERCISES],
     customCardioTypes: [...DEFAULT_CARDIO_TYPES],
     version: 1,
