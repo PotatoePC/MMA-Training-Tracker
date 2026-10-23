@@ -20,12 +20,25 @@ export function loadData(): AppData {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(seed));
       return seed;
     }
-    return {
-      sessions: parsed.sessions,
+
+    // Filter out any legacy placeholder/seed sessions
+    const cleanSessions = parsed.sessions.filter(
+      (s) => !s.id.startsWith("seed-")
+    );
+
+    const cleanData: AppData = {
+      sessions: cleanSessions,
       customExercises: parsed.customExercises ?? [],
       customCardioTypes: parsed.customCardioTypes ?? [],
       version: parsed.version ?? 1,
     };
+
+    // If placeholder sessions were in localStorage, overwrite with clean data
+    if (cleanSessions.length !== parsed.sessions.length) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(cleanData));
+    }
+
+    return cleanData;
   } catch {
     const seed = createSeedData();
     localStorage.setItem(STORAGE_KEY, JSON.stringify(seed));

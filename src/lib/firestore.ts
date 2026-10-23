@@ -53,10 +53,24 @@ export function subscribeToUserData(
   const unsubSessions = onSnapshot(
     sessionsRef,
     (snapshot) => {
-      currentSessions = snapshot.docs.map((docSnap) => {
-        const d = docSnap.data() as TrainingSession;
-        return { ...d, id: docSnap.id };
-      });
+      // Filter out any legacy seed sessions
+      currentSessions = snapshot.docs
+        .map((docSnap) => {
+          const d = docSnap.data() as TrainingSession;
+          return { ...d, id: docSnap.id };
+        })
+        .filter((s) => !s.id.startsWith("seed-"));
+
+      // Clean up any lingering seed documents in cloud storage
+      const seedDocs = snapshot.docs.filter((d) => d.id.startsWith("seed-"));
+      if (seedDocs.length > 0 && db) {
+        const batch = writeBatch(db);
+        for (const docSnap of seedDocs) {
+          batch.delete(docSnap.ref);
+        }
+        batch.commit().catch(console.error);
+      }
+
       updateCombined();
     },
     (err) => {
@@ -153,7 +167,7 @@ export async function deleteSessionCloud(
 }
 
 /**
- * Resets user cloud data to initial seed sessions.
+ * Resets user cloud data (clears all cloud sessions).
  */
 export async function resetUserCloudData(userId: string): Promise<void> {
   if (!db) return;
@@ -200,9 +214,9 @@ export async function migrateLocalDataToCloud(
     return { migrated: false, sessionCount: existingSnap.size };
   }
 
-  const sessionsToUpload = localData.sessions?.length
-    ? localData.sessions
-    : [];
+  const sessionsToUpload = (localData.sessions || []).filter(
+    (s) => !s.id.startsWith("seed-")
+  );
 
   const batch = writeBatch(db);
 
