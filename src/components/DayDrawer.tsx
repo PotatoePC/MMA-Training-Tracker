@@ -22,6 +22,7 @@ interface DayDrawerProps {
   sessions: TrainingSession[];
   customExercises: string[];
   customCardioTypes: string[];
+  isometricExercises?: string[];
   onClose: () => void;
   onAdd: (session: TrainingSession) => void;
   onDelete: (id: string) => void;
@@ -34,6 +35,7 @@ export function DayDrawer({
   sessions,
   customExercises,
   customCardioTypes,
+  isometricExercises = [],
   onClose,
   onAdd,
   onDelete,
@@ -182,6 +184,7 @@ export function DayDrawer({
           {view === "strength" && (
             <StrengthForm
               customExercises={customExercises}
+              isometricExercises={isometricExercises}
               sessions={sessions}
               dateKey={dateKey}
               onSubmit={saveStrength}

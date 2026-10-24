@@ -30,6 +30,7 @@ export function loadData(): AppData {
       sessions: cleanSessions,
       customExercises: parsed.customExercises ?? [],
       customCardioTypes: parsed.customCardioTypes ?? [],
+      isometricExercises: parsed.isometricExercises ?? [],
       version: parsed.version ?? 1,
     };
 
@@ -57,9 +58,21 @@ export function addSession(session: TrainingSession): AppData {
     a.date.localeCompare(b.date)
   );
   if (session.strength) {
+    if (!data.isometricExercises) {
+      data.isometricExercises = [];
+    }
     for (const ex of session.strength.exercises) {
       if (ex.name && !data.customExercises.includes(ex.name)) {
         data.customExercises = [...data.customExercises, ex.name].sort();
+      }
+      if (ex.mode === "isometric") {
+        if (!data.isometricExercises.includes(ex.name)) {
+          data.isometricExercises.push(ex.name);
+        }
+      } else if (ex.mode === "reps") {
+        data.isometricExercises = data.isometricExercises.filter(
+          (n) => n.toLowerCase() !== ex.name.toLowerCase()
+        );
       }
     }
   }
@@ -80,6 +93,25 @@ export function updateSession(session: TrainingSession): AppData {
   data.sessions = data.sessions.map((s) =>
     s.id === session.id ? session : s
   );
+  if (session.strength) {
+    if (!data.isometricExercises) {
+      data.isometricExercises = [];
+    }
+    for (const ex of session.strength.exercises) {
+      if (ex.name && !data.customExercises.includes(ex.name)) {
+        data.customExercises = [...data.customExercises, ex.name].sort();
+      }
+      if (ex.mode === "isometric") {
+        if (!data.isometricExercises.includes(ex.name)) {
+          data.isometricExercises.push(ex.name);
+        }
+      } else if (ex.mode === "reps") {
+        data.isometricExercises = data.isometricExercises.filter(
+          (n) => n.toLowerCase() !== ex.name.toLowerCase()
+        );
+      }
+    }
+  }
   saveData(data);
   return data;
 }

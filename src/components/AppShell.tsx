@@ -28,6 +28,7 @@ export function AppShell() {
     sessions,
     customExercises,
     customCardioTypes,
+    isometricExercises,
     ready,
     syncStatus,
     addSession,
@@ -205,6 +206,7 @@ export function AppShell() {
           sessions={sessions}
           customExercises={customExercises}
           customCardioTypes={customCardioTypes}
+          isometricExercises={isometricExercises}
           onClose={() => setSelectedDate(null)}
           onAdd={addSession}
           onDelete={deleteSession}

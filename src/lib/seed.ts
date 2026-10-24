@@ -8,6 +8,7 @@ export function createSeedData(): AppData {
     sessions: [],
     customExercises: [...DEFAULT_EXERCISES],
     customCardioTypes: [...DEFAULT_CARDIO_TYPES],
+    isometricExercises: [],
     version: 1,
   };
 }

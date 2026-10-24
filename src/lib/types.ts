@@ -1,14 +1,17 @@
 export type SessionType = "strength" | "cardio" | "grappling" | "striking";
+export type ExerciseMode = "reps" | "isometric";
 
 export interface ExerciseSet {
   id: string;
   weightKg: number;
-  reps: number;
+  reps?: number;
+  timeSeconds?: number;
 }
 
 export interface StrengthExercise {
   id: string;
   name: string;
+  mode?: ExerciseMode;
   sets: ExerciseSet[];
   rpe?: number;
 }
@@ -46,6 +49,7 @@ export interface AppData {
   sessions: TrainingSession[];
   customExercises: string[];
   customCardioTypes: string[];
+  isometricExercises?: string[];
   version: number;
 }
 

@@ -17,6 +17,7 @@ import { DEFAULT_CARDIO_TYPES, DEFAULT_EXERCISES } from "./types";
 interface PreferencesDoc {
   customExercises?: string[];
   customCardioTypes?: string[];
+  isometricExercises?: string[];
   version?: number;
 }
 
@@ -39,12 +40,14 @@ export function subscribeToUserData(
   let currentSessions: TrainingSession[] = [];
   let customExercises: string[] = [...DEFAULT_EXERCISES];
   let customCardioTypes: string[] = [...DEFAULT_CARDIO_TYPES];
+  let isometricExercises: string[] = [];
 
   const updateCombined = () => {
     onData({
       sessions: [...currentSessions].sort((a, b) => a.date.localeCompare(b.date)),
       customExercises,
       customCardioTypes,
+      isometricExercises,
       version: 1,
     });
   };
@@ -87,6 +90,7 @@ export function subscribeToUserData(
         const data = docSnap.data() as PreferencesDoc;
         if (data.customExercises) customExercises = data.customExercises;
         if (data.customCardioTypes) customCardioTypes = data.customCardioTypes;
+        if (data.isometricExercises) isometricExercises = data.isometricExercises;
       }
       updateCombined();
     },
@@ -124,12 +128,25 @@ export async function saveSessionCloud(
   let updated = false;
   let nextEx = currentPrefs.customExercises ? [...currentPrefs.customExercises] : [...DEFAULT_EXERCISES];
   let nextCar = currentPrefs.customCardioTypes ? [...currentPrefs.customCardioTypes] : [...DEFAULT_CARDIO_TYPES];
+  let nextIso = currentPrefs.isometricExercises ? [...currentPrefs.isometricExercises] : [];
 
   if (session.strength?.exercises) {
     for (const ex of session.strength.exercises) {
       if (ex.name && !nextEx.includes(ex.name)) {
         nextEx.push(ex.name);
         updated = true;
+      }
+      if (ex.mode === "isometric") {
+        if (!nextIso.includes(ex.name)) {
+          nextIso.push(ex.name);
+          updated = true;
+        }
+      } else if (ex.mode === "reps") {
+        const filtered = nextIso.filter((n) => n.toLowerCase() !== ex.name.toLowerCase());
+        if (filtered.length !== nextIso.length) {
+          nextIso = filtered;
+          updated = true;
+        }
       }
     }
   }
@@ -147,6 +164,7 @@ export async function saveSessionCloud(
       {
         customExercises: nextEx.sort(),
         customCardioTypes: nextCar.sort(),
+        isometricExercises: nextIso,
         version: 1,
       },
       { merge: true }
@@ -235,6 +253,7 @@ export async function migrateLocalDataToCloud(
       customCardioTypes: localData.customCardioTypes?.length
         ? localData.customCardioTypes
         : [...DEFAULT_CARDIO_TYPES],
+      isometricExercises: localData.isometricExercises || [],
       version: localData.version ?? 1,
       migratedAt: new Date().toISOString(),
     },

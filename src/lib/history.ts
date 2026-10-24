@@ -1,31 +1,44 @@
-import type { TrainingSession } from "./types";
+import type { TrainingSession, ExerciseMode } from "./types";
 import { bestEpley1RM, totalVolume } from "./formulas";
 import { formatShortDate } from "./calendar";
 
 export interface PreviousSetData {
   setNumber: number;
   weightKg: number;
-  reps: number;
+  reps?: number;
+  timeSeconds?: number;
 }
 
 export interface PreviousExerciseHistory {
   sessionId: string;
   date: string;
   formattedDate: string;
+  mode?: ExerciseMode;
   rpe?: number;
   sets: PreviousSetData[];
   best1RM: number;
   totalVolume: number;
+  totalTimeSeconds?: number;
 }
 
 export function formatPrevSet(
-  set?: { weightKg: number; reps: number } | null
+  set?: { weightKg: number; reps?: number; timeSeconds?: number } | null,
+  mode: ExerciseMode = "reps"
 ): string {
   if (!set) return "—";
-  if (set.weightKg === 0 && set.reps > 0) return `BW × ${set.reps}`;
-  if (set.weightKg > 0 && set.reps === 0) return `${set.weightKg}kg`;
-  if (set.weightKg === 0 && set.reps === 0) return "—";
-  return `${set.weightKg}kg × ${set.reps}`;
+
+  if (mode === "isometric") {
+    const time = set.timeSeconds ?? 0;
+    if (time <= 0 && set.weightKg <= 0) return "—";
+    if (set.weightKg === 0) return `${time}s`;
+    return `${set.weightKg}kg × ${time}s`;
+  }
+
+  const reps = set.reps ?? 0;
+  if (set.weightKg === 0 && reps > 0) return `BW × ${reps}`;
+  if (set.weightKg > 0 && reps === 0) return `${set.weightKg}kg`;
+  if (set.weightKg === 0 && reps === 0) return "—";
+  return `${set.weightKg}kg × ${reps}`;
 }
 
 /**
@@ -49,7 +62,12 @@ export function getLastExercisePerformance(
         ex.name.trim().toLowerCase() === target &&
         ex.sets &&
         ex.sets.length > 0 &&
-        ex.sets.some((st) => st.weightKg > 0 || st.reps > 0)
+        ex.sets.some(
+          (st) =>
+            st.weightKg > 0 ||
+            (st.reps ?? 0) > 0 ||
+            (st.timeSeconds ?? 0) > 0
+        )
     );
   });
 
@@ -77,13 +95,20 @@ export function getLastExercisePerformance(
   );
   if (!matchingEx || !matchingEx.sets || !matchingEx.sets.length) return null;
 
-  const validSets = matchingEx.sets.filter((s) => s.weightKg > 0 || s.reps > 0);
+  const isIsometric = matchingEx.mode === "isometric";
+
+  const validSets = matchingEx.sets.filter((s) =>
+    isIsometric
+      ? s.weightKg > 0 || (s.timeSeconds ?? 0) > 0
+      : s.weightKg > 0 || (s.reps ?? 0) > 0
+  );
   if (!validSets.length) return null;
 
   const sets: PreviousSetData[] = validSets.map((s, idx) => ({
     setNumber: idx + 1,
     weightKg: s.weightKg,
     reps: s.reps,
+    timeSeconds: s.timeSeconds,
   }));
 
   let formattedDate = lastSession.date;
@@ -93,13 +118,19 @@ export function getLastExercisePerformance(
     // fallback to raw date
   }
 
+  const totalTimeSeconds = isIsometric
+    ? validSets.reduce((sum, s) => sum + (s.timeSeconds ?? 0), 0)
+    : undefined;
+
   return {
     sessionId: lastSession.id,
     date: lastSession.date,
     formattedDate,
+    mode: matchingEx.mode ?? "reps",
     rpe: matchingEx.rpe ?? lastSession.strength.rpe,
     sets,
-    best1RM: bestEpley1RM(validSets),
+    best1RM: isIsometric ? 0 : bestEpley1RM(validSets),
     totalVolume: totalVolume(validSets),
+    totalTimeSeconds,
   };
 }

@@ -25,6 +25,7 @@ import type { TrainingSession } from "@/lib/types";
 import { SESSION_COLORS } from "@/lib/types";
 import {
   bestEpley1RM,
+  formatDurationSeconds,
   formatPace,
   paceMinPerKm,
   totalVolume,
@@ -77,6 +78,18 @@ export function Analytics({ sessions }: AnalyticsProps) {
     return Array.from(names).sort();
   }, [strengthSessions]);
 
+  const dynamicExerciseNames = useMemo(() => {
+    const names = new Set<string>();
+    for (const s of strengthSessions) {
+      for (const ex of s.strength!.exercises) {
+        if (ex.mode !== "isometric") {
+          names.add(ex.name);
+        }
+      }
+    }
+    return Array.from(names).sort();
+  }, [strengthSessions]);
+
   const cardioTypes = useMemo(() => {
     const types = new Set<string>();
     for (const s of cardioSessions) {
@@ -85,8 +98,45 @@ export function Analytics({ sessions }: AnalyticsProps) {
     return Array.from(types).sort();
   }, [cardioSessions]);
 
-  const activeExercise = selectedExercise || exerciseNames[0] || "";
+  const activeExercise = selectedExercise || (tab === "strength-1rm" ? dynamicExerciseNames[0] : exerciseNames[0]) || "";
   const activeCardioType = selectedCardioType || cardioTypes[0] || "";
+
+  const isActiveExerciseIsometric = useMemo(() => {
+    if (!activeExercise) return false;
+    for (const s of strengthSessions) {
+      const match = s.strength!.exercises.find((e) => e.name === activeExercise);
+      if (match?.mode === "isometric") return true;
+      if (match?.mode === "reps") return false;
+    }
+    return false;
+  }, [strengthSessions, activeExercise]);
+
+  const isometricTimeData = useMemo(() => {
+    if (!activeExercise || !isActiveExerciseIsometric) return [];
+    return strengthSessions
+      .map((s) => {
+        const ex = s.strength!.exercises.find((e) => e.name === activeExercise);
+        if (!ex) return null;
+        const totalTime = ex.sets.reduce((sum, set) => sum + (set.timeSeconds ?? 0), 0);
+        const bestHold = Math.max(...ex.sets.map((set) => set.timeSeconds ?? 0), 0);
+        const maxWeight = Math.max(...ex.sets.map((set) => set.weightKg), 0);
+        return {
+          date: s.date,
+          label: formatShortDate(s.date),
+          totalTime,
+          bestHold,
+          maxWeight,
+        };
+      })
+      .filter(Boolean)
+      .sort((a, b) => a!.date.localeCompare(b!.date)) as {
+      date: string;
+      label: string;
+      totalTime: number;
+      bestHold: number;
+      maxWeight: number;
+    }[];
+  }, [strengthSessions, activeExercise, isActiveExerciseIsometric]);
 
   const volumeData = useMemo(() => {
     if (!activeExercise) return [];
@@ -113,11 +163,11 @@ export function Analytics({ sessions }: AnalyticsProps) {
   }, [strengthSessions, activeExercise]);
 
   const oneRmData = useMemo(() => {
-    if (!activeExercise) return [];
+    if (!activeExercise || isActiveExerciseIsometric) return [];
     return strengthSessions
       .map((s) => {
         const ex = s.strength!.exercises.find((e) => e.name === activeExercise);
-        if (!ex) return null;
+        if (!ex || ex.mode === "isometric") return null;
         return {
           date: s.date,
           label: formatShortDate(s.date),
@@ -130,7 +180,7 @@ export function Analytics({ sessions }: AnalyticsProps) {
       label: string;
       oneRm: number;
     }[];
-  }, [strengthSessions, activeExercise]);
+  }, [strengthSessions, activeExercise, isActiveExerciseIsometric]);
 
   const cardioTimeData = useMemo(() => {
     if (!activeCardioType) return [];
@@ -247,35 +297,127 @@ export function Analytics({ sessions }: AnalyticsProps) {
               onChange={(e) => setSelectedExercise(e.target.value)}
               className="w-full max-w-xs rounded-xl border border-white/10 bg-[#2c2c2e] px-3 py-2 text-sm text-zinc-100 outline-none focus:border-sky-500/50"
             >
-              {exerciseNames.map((n) => (
-                <option key={n} value={n}>
-                  {n}
-                </option>
-              ))}
+              {(tab === "strength-1rm" ? dynamicExerciseNames : exerciseNames).map((n) => {
+                const isIso = strengthSessions.some((s) =>
+                  s.strength?.exercises.some((e) => e.name === n && e.mode === "isometric")
+                );
+                return (
+                  <option key={n} value={n}>
+                    {n} {isIso && tab !== "strength-1rm" ? "⏱️ (Isometric)" : ""}
+                  </option>
+                );
+              })}
             </select>
+            {tab === "strength-1rm" && dynamicExerciseNames.length === 0 && (
+              <p className="mt-1 text-xs text-zinc-500">
+                Isometric exercises are excluded from 1RM analysis.
+              </p>
+            )}
           </div>
         )}
 
-        {!isStrengthTab && cardioTypes.length > 0 && (
-          <div className="mb-4">
-            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-zinc-500">
-              Cardio type
-            </label>
-            <select
-              value={activeCardioType}
-              onChange={(e) => setSelectedCardioType(e.target.value)}
-              className="w-full max-w-xs rounded-xl border border-white/10 bg-[#2c2c2e] px-3 py-2 text-sm text-zinc-100 outline-none focus:border-emerald-500/50"
-            >
-              {cardioTypes.map((n) => (
-                <option key={n} value={n}>
-                  {n}
-                </option>
-              ))}
-            </select>
+        {tab === "strength-volume" && isActiveExerciseIsometric && (
+          <div>
+            <div className="mb-3 flex items-center justify-between">
+              <div>
+                <p className="text-sm text-zinc-400">
+                  Hold duration progression for{" "}
+                  <strong className="font-semibold text-amber-300">
+                    {activeExercise || "—"}
+                  </strong>
+                </p>
+                <p className="text-[11px] text-zinc-500">
+                  Tracking total hold duration and best single hold
+                </p>
+              </div>
+              <span className="flex items-center gap-1 rounded-full bg-amber-500/15 px-2.5 py-0.5 text-xs font-semibold text-amber-300 ring-1 ring-amber-500/30">
+                <Timer className="h-3 w-3" /> Isometric
+              </span>
+            </div>
+
+            {isometricTimeData.length === 0 ? (
+              <EmptyChart message="No isometric hold data for this exercise yet." />
+            ) : (
+              <div className="h-72 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={isometricTimeData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke={GRID} />
+                    <XAxis
+                      dataKey="label"
+                      tick={{ fontSize: 11, fill: TICK }}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <YAxis
+                      yAxisId="time"
+                      tick={{ fontSize: 11, fill: TICK }}
+                      axisLine={false}
+                      tickLine={false}
+                      tickFormatter={(sec) => formatDurationSeconds(sec)}
+                    />
+                    {isometricTimeData.some((d) => d.maxWeight > 0) && (
+                      <YAxis
+                        yAxisId="weight"
+                        orientation="right"
+                        tick={{ fontSize: 11, fill: TICK }}
+                        axisLine={false}
+                        tickLine={false}
+                        unit=" kg"
+                      />
+                    )}
+                    <Tooltip
+                      contentStyle={TOOLTIP_STYLE}
+                      formatter={(value, name) => [
+                        name === "maxWeight"
+                          ? `${value} kg`
+                          : formatDurationSeconds(Number(value)),
+                        name === "totalTime"
+                          ? "Total Hold Time"
+                          : name === "bestHold"
+                          ? "Best Set Hold"
+                          : "Added Weight",
+                      ]}
+                    />
+                    <Legend wrapperStyle={{ color: TICK }} />
+                    <Line
+                      yAxisId="time"
+                      type="monotone"
+                      dataKey="totalTime"
+                      name="Total Hold Time"
+                      stroke="#F59E0B"
+                      strokeWidth={2.5}
+                      dot={{ r: 4, fill: "#F59E0B" }}
+                      activeDot={{ r: 6 }}
+                    />
+                    <Line
+                      yAxisId="time"
+                      type="monotone"
+                      dataKey="bestHold"
+                      name="Best Set Hold"
+                      stroke="#FCD34D"
+                      strokeWidth={2}
+                      strokeDasharray="4 4"
+                      dot={{ r: 3, fill: "#FCD34D" }}
+                    />
+                    {isometricTimeData.some((d) => d.maxWeight > 0) && (
+                      <Line
+                        yAxisId="weight"
+                        type="monotone"
+                        dataKey="maxWeight"
+                        name="Added Weight"
+                        stroke="#38BDF8"
+                        strokeWidth={1.5}
+                        dot={{ r: 3, fill: "#38BDF8" }}
+                      />
+                    )}
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            )}
           </div>
         )}
 
-        {tab === "strength-volume" && (
+        {tab === "strength-volume" && !isActiveExerciseIsometric && (
           <div>
             <p className="mb-3 text-sm text-zinc-500">
               Weight (kg) and total volume over time for{" "}
@@ -361,10 +503,10 @@ export function Analytics({ sessions }: AnalyticsProps) {
               <strong className="text-zinc-200">{activeExercise || "—"}</strong>
             </p>
             <p className="mb-3 text-[11px] text-zinc-600">
-              Formula: 1RM = weight × (1 + reps / 30) · results in kg
+              Formula: 1RM = weight × (1 + reps / 30) · results in kg · isometric exercises excluded
             </p>
             {oneRmData.length === 0 ? (
-              <EmptyChart message="No 1RM data for this exercise yet." />
+              <EmptyChart message={dynamicExerciseNames.length === 0 ? "No repetition-based exercises found. 1RM is calculated for weight & reps, while isometric exercises track hold duration." : "No 1RM data for this exercise yet."} />
             ) : (
               <div className="h-72 w-full">
                 <ResponsiveContainer width="100%" height="100%">

@@ -7,12 +7,14 @@ import {
   Swords,
   Trash2,
   Weight,
+  Timer,
 } from "lucide-react";
 import type { TrainingSession } from "@/lib/types";
 import { SESSION_COLORS } from "@/lib/types";
 import {
   bestEpley1RM,
   formatDuration,
+  formatDurationSeconds,
   formatPace,
   paceMinPerKm,
   totalVolume,
@@ -76,19 +78,32 @@ export function SessionDetail({ session, onDelete }: SessionDetailProps) {
       {session.type === "strength" && session.strength && (
         <div className="space-y-3">
           {session.strength.exercises.map((ex) => {
+            const isIsometric = ex.mode === "isometric";
             const vol = totalVolume(ex.sets);
-            const oneRm = bestEpley1RM(ex.sets);
+            const oneRm = isIsometric ? 0 : bestEpley1RM(ex.sets);
+            const totalHoldSeconds = isIsometric
+              ? ex.sets.reduce((sum, s) => sum + (s.timeSeconds ?? 0), 0)
+              : 0;
             const exerciseRpe = ex.rpe ?? session.strength?.rpe;
+
             return (
               <div
                 key={ex.id}
-                className="rounded-xl bg-black/30 p-3 ring-1 ring-white/6"
+                className={[
+                  "rounded-xl bg-black/30 p-3 ring-1",
+                  isIsometric ? "ring-amber-500/20" : "ring-white/6",
+                ].join(" ")}
               >
                 <div className="mb-2 flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
                     <p className="text-sm font-semibold text-zinc-200">
                       {ex.name}
                     </p>
+                    {isIsometric ? (
+                      <span className="flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold text-amber-300 ring-1 ring-amber-500/30">
+                        <Timer className="h-2.5 w-2.5" /> Isometric
+                      </span>
+                    ) : null}
                     {exerciseRpe != null && (
                       <span className="rounded-full bg-sky-500/15 px-2 py-0.5 text-[10px] font-semibold text-sky-300 ring-1 ring-sky-500/30">
                         RPE {exerciseRpe}/10
@@ -96,11 +111,23 @@ export function SessionDetail({ session, onDelete }: SessionDetailProps) {
                     )}
                   </div>
                   <div className="flex items-center gap-2 text-[10px] text-zinc-500">
-                    <span className="flex items-center gap-0.5">
-                      <Weight className="h-3 w-3" />
-                      {vol.toLocaleString()} kg vol
-                    </span>
-                    <span>1RM ≈ {oneRm.toFixed(1)} kg</span>
+                    {isIsometric ? (
+                      <>
+                        <span className="flex items-center gap-1 font-semibold text-amber-400">
+                          <Timer className="h-3 w-3" />
+                          {formatDurationSeconds(totalHoldSeconds)} hold
+                        </span>
+                        {vol > 0 && <span>{vol.toLocaleString()} kg load</span>}
+                      </>
+                    ) : (
+                      <>
+                        <span className="flex items-center gap-0.5">
+                          <Weight className="h-3 w-3" />
+                          {vol.toLocaleString()} kg vol
+                        </span>
+                        <span>1RM ≈ {oneRm.toFixed(1)} kg</span>
+                      </>
+                    )}
                   </div>
                 </div>
                 <div className="space-y-1">
@@ -110,11 +137,25 @@ export function SessionDetail({ session, onDelete }: SessionDetailProps) {
                       className="flex items-center gap-3 text-xs text-zinc-400"
                     >
                       <span className="w-5 text-zinc-600">#{i + 1}</span>
-                      <span className="font-medium tabular-nums text-zinc-300">
-                        {s.weightKg} kg
-                      </span>
-                      <span className="text-zinc-600">×</span>
-                      <span className="tabular-nums">{s.reps} reps</span>
+                      {isIsometric ? (
+                        <>
+                          <span className="font-medium tabular-nums text-zinc-300">
+                            {s.weightKg > 0 ? `${s.weightKg} kg` : "Bodyweight"}
+                          </span>
+                          <span className="text-zinc-600">·</span>
+                          <span className="font-semibold tabular-nums text-amber-300">
+                            {s.timeSeconds ?? 0}s hold
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="font-medium tabular-nums text-zinc-300">
+                            {s.weightKg} kg
+                          </span>
+                          <span className="text-zinc-600">×</span>
+                          <span className="tabular-nums">{s.reps ?? 0} reps</span>
+                        </>
+                      )}
                     </div>
                   ))}
                 </div>

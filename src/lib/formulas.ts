@@ -7,17 +7,27 @@ export function epley1RM(weightKg: number, reps: number): number {
 
 /** Total volume for a set of sets: sum(weight * reps) in kg */
 export function totalVolume(
-  sets: { weightKg: number; reps: number }[]
+  sets: { weightKg: number; reps?: number }[]
 ): number {
-  return sets.reduce((sum, s) => sum + s.weightKg * s.reps, 0);
+  return sets.reduce((sum, s) => sum + s.weightKg * (s.reps ?? 0), 0);
 }
 
 /** Best estimated 1RM from a list of sets */
 export function bestEpley1RM(
-  sets: { weightKg: number; reps: number }[]
+  sets: { weightKg: number; reps?: number }[]
 ): number {
   if (!sets.length) return 0;
-  return Math.max(...sets.map((s) => epley1RM(s.weightKg, s.reps)));
+  return Math.max(...sets.map((s) => epley1RM(s.weightKg, s.reps ?? 0)));
+}
+
+/** Format duration seconds as e.g. 45s, 1m 30s */
+export function formatDurationSeconds(seconds: number): string {
+  if (!seconds || seconds <= 0) return "0s";
+  if (seconds < 60) return `${seconds}s`;
+  const mins = Math.floor(seconds / 60);
+  const remainingSecs = Math.round(seconds % 60);
+  if (remainingSecs === 0) return `${mins}m`;
+  return `${mins}m ${remainingSecs}s`;
 }
 
 /**

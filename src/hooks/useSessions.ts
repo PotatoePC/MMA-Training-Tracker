@@ -150,6 +150,7 @@ export function useSessions() {
     sessions: data?.sessions ?? [],
     customExercises: data?.customExercises ?? [],
     customCardioTypes: data?.customCardioTypes ?? [],
+    isometricExercises: data?.isometricExercises ?? [],
     ready: ready && !authLoading,
     syncStatus,
     addSession,
